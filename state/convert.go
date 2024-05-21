@@ -361,34 +361,21 @@ func deriveEventsHashV2(events []flowEvent) flow.Identifier {
 }
 
 func deriveEventsHashV4(events []flowEvent) flow.Identifier {
-	tree, err := merkle.NewTree(flow.IdentifierLen)
+	eventsList := make(flow.EventsList, len(events))
+	for i, event := range events {
+		eventsList[i] = flow.Event{
+			Type:             event.Type,
+			TransactionID:    event.TransactionID,
+			TransactionIndex: event.TransactionIndex,
+			EventIndex:       event.EventIndex,
+			Payload:          event.Payload,
+		}
+	}
+	eventsHash, err := flow.EventsMerkleRootHash(eventsList)
 	if err != nil {
-		log.Fatalf("Failed to instantiate merkle tree: %s", err)
+		log.Fatalf("hash events failed: %s", err)
 	}
-	for _, src := range events {
-		dst := struct {
-			TxID             []byte
-			Index            uint32
-			Type             string
-			TransactionIndex uint32
-			Payload          []byte
-		}{
-			TxID:             src.TransactionID[:],
-			Index:            src.EventIndex,
-			Type:             string(src.Type),
-			TransactionIndex: src.TransactionIndex,
-			Payload:          src.Payload,
-		}
-		fp := fingerprint.Fingerprint(dst)
-		eventID := flow.MakeIDFromFingerPrint(fp)
-		_, err = tree.Put(eventID[:], fp)
-		if err != nil {
-			log.Fatalf("Failed to put event into the merkle tree: %s", err)
-		}
-	}
-	var root flow.Identifier
-	copy(root[:], tree.Hash())
-	return root
+	return eventsHash
 }
 
 func deriveExecutionResult(spork *config.Spork, exec flowExecutionResult) flow.Identifier {

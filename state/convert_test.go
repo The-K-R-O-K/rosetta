@@ -149,7 +149,6 @@ func TestDeriveEventsHash(t *testing.T) {
 func createSpork(ctx context.Context) (*config.Spork, error) {
 	addr := accessAddr
 	pool := access.New(ctx, []access.NodeConfig{{Address: addr}}, nil)
-	//chain := &config.Chain{Network: "canary"}
 	chain := &config.Chain{Network: "mainnet"}
 	return &config.Spork{
 		Version:     5,
